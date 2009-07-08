@@ -1,6 +1,6 @@
 // Generate a bunch of random sample projects
 var projects = []; 
-for( var i = 0; i < 1000; i++ ){
+for( var i = 0; i < 100; i++ ){
 	projects[projects.length] = {
 		id: i, 
 		name: (Math.random() > .5? "Air ": "jQuery ") + 
@@ -48,7 +48,8 @@ $(document).ready( function(){
 				for( var i = 0; i < projects.length && obj.length < 100; i++ ){
 					// combine a few search filters
 					if( Filters.contains( text, projects[i], [ "name", "date"] ) || 
-						Filters.expand( text, projects[i], [ "name" ] ) ){
+						Filters.expand( text, projects[i], [ "name" ] ) 
+					){
 						
 						obj[obj.length] = projects[i]; 
 					}

@@ -285,6 +285,41 @@
 }</code>	
 		</div>
 
+
+		<div class="opt-name">onFocus</div>
+		<div class="opt-help">
+			(optional) A callback function used for the focus event. If you return <i>false</i>
+			the tokeninput will not be allowed focus, thus the autocomplete box will not show 
+			and the user will not be able to focus the element at all. It is your task 
+			to let the user know what's going on and why he's not allowed to focus. 
+			<br />
+			Alternatively (and by default) this value can be set to null, is equivalent to 
+			always returning <i>true</i>
+			<br />
+			Note the second parameter, a reference to tokeninput, which saves 
+			you some javascript OOP-mess. 
+<code>onFocus: function( event, tokeninput ){
+  if( Math.random() > 0.5 ){
+    return true; 
+  }
+  else{
+    alert( "bad luck... try again!" ); 
+    return false; 
+  }
+}</code>	
+		</div>
+		<div class="opt-name">onBlur</div>
+		<div class="opt-help">
+			(optional) A callback function that let's you know when the input loses focus. 
+			<br />
+			Note the second parameter, a reference to tokeninput, which saves 
+			you some javascript OOP-mess. 
+<code>onBlur: function( event, tokeninput ){
+  alert( "left for gooooood" ); 
+  // this could also be a good time to validate the user's input 
+  // if you haven't already done that from within onChange
+}</code>	
+		</div>
 		<div class="opt-name">maxTokens</div>
 		<div class="opt-help">(optional) maximum number of tokens, 0 means no limit. Defaults to 0. </div>
 		
@@ -324,7 +359,7 @@ toki.insert( { id: ..., ... } ); </code>
 			<i>objects</i> is an array of the datastructure you chose. 
 <code>// Following data normally comes from ajax
 var objects =  [ { id: 7, name: "Mr. T" }, { id: 8, "Smith" } ]; 
-toki.result( objects ); 
+toki.result( objects ); </code>
 		</div>
 		
 		<div class="opt-name">insert( object, bypass )</div>

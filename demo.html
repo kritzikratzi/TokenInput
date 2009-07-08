@@ -35,6 +35,10 @@
 				border-bottom: 1px dotted black; 
 			}
 			
+			div.text{
+				width: 720px; 
+			}
+			
 			code{
 				display: block; 
 				white-space: pre; 
@@ -83,11 +87,11 @@
 			<br /><br />
 			
 			<div style="float: left; width: 50%; ">
-				<h3>Tokeninput with autocomplete: <small><a href="#" onclick="$('#projects-code').toggle('normal'); return false;">source</a> </small></h3>
+				<h3>Tokeninput with autocomplete and initial values: <small><a href="#" onclick="$('#projects-code').toggle('normal'); return false;">source</a> </small></h3>
 				<input type="hidden" id="projects" />
 				<code style="display: none;" id="projects-code"><font color="#444444">// Generate a bunch of random sample projects</font>
 <strong>var</strong> projects <font color="4444FF">=</font> []<font color="4444FF">;</font> 
-<strong>for</strong>( <strong>var</strong> i <font color="4444FF">=</font> <font color="#FF0000">0</font><font color="4444FF">;</font> i <font color="4444FF">&lt;</font> <font color="#FF0000">1000</font><font color="4444FF">;</font> i++ )<font color="4444FF"><strong>{</strong></font>
+<strong>for</strong>( <strong>var</strong> i <font color="4444FF">=</font> <font color="#FF0000">0</font><font color="4444FF">;</font> i <font color="4444FF">&lt;</font> <font color="#FF0000">100</font><font color="4444FF">;</font> i++ )<font color="4444FF"><strong>{</strong></font>
   projects[projects.<font color="#2040a0"><strong>length</strong></font>] <font color="4444FF">=</font> <font color="4444FF"><strong>{</strong></font>
     id: i, 
     <font color="#2040a0"><strong>name</strong></font>: (<font color="#2040a0"><strong>Math</strong></font>.<font color="a52a2a"><strong>random</strong></font>() <font color="4444FF">&gt;</font> .<font color="#FF0000">5</font>? <font color="#008000">&quot;Air &quot;</font>: <font color="#008000">&quot;jQuery &quot;</font>) + 
@@ -135,7 +139,8 @@ $(<font color="#2040a0"><strong>document</strong></font>).ready( function()<font
         <strong>for</strong>( <strong>var</strong> i <font color="4444FF">=</font> <font color="#FF0000">0</font><font color="4444FF">;</font> i <font color="4444FF">&lt;</font> projects.<font color="#2040a0"><strong>length</strong></font> <font color="4444FF">&amp;</font><font color="4444FF">&amp;</font> obj.<font color="#2040a0"><strong>length</strong></font> <font color="4444FF">&lt;</font> <font color="#FF0000">100</font><font color="4444FF">;</font> i++ )<font color="4444FF"><strong>{</strong></font>
           <font color="#444444">// combine a few search filters</font>
           <strong>if</strong>( Filters.contains( <font color="#2040a0"><strong>text</strong></font>, projects[i], [ <font color="#008000">&quot;name&quot;</font>, <font color="#008000">&quot;date&quot;</font>] ) <font color="4444FF">|</font><font color="4444FF">|</font> 
-            Filters.expand( <font color="#2040a0"><strong>text</strong></font>, projects[i], [ <font color="#008000">&quot;name&quot;</font> ] ) )<font color="4444FF"><strong>{</strong></font>
+            Filters.expand( <font color="#2040a0"><strong>text</strong></font>, projects[i], [ <font color="#008000">&quot;name&quot;</font> ] ) 
+          )<font color="4444FF"><strong>{</strong></font>
             
             obj[obj.<font color="#2040a0"><strong>length</strong></font>] <font color="4444FF">=</font> projects[i]<font color="4444FF">;</font> 
           <font color="4444FF"><strong>}</strong></font>
@@ -147,7 +152,13 @@ $(<font color="#2040a0"><strong>document</strong></font>).ready( function()<font
     
     tokenText: function( obj )<font color="4444FF"><strong>{</strong></font>
       <strong>return</strong> obj.<font color="#2040a0"><strong>name</strong></font><font color="4444FF">;</font> 
-    <font color="4444FF"><strong>}</strong></font>
+    <font color="4444FF"><strong>}</strong></font>, 
+    
+    values: [
+      <font color="4444FF"><strong>{</strong></font> id: <font color="#FF0000">9991</font>, <font color="#2040a0"><strong>name</strong></font>: <font color="#008000">&quot;Asteroids&quot;</font>, date: <font color="#008000">&quot;1.9.1979&quot;</font> <font color="4444FF"><strong>}</strong></font>, 
+      <font color="4444FF"><strong>{</strong></font> id: <font color="#FF0000">9992</font>, <font color="#2040a0"><strong>name</strong></font>: <font color="#008000">&quot;Tetris&quot;</font>, date: <font color="#008000">&quot;6.6.1984&quot;</font> <font color="4444FF"><strong>}</strong></font>, 
+      <font color="4444FF"><strong>{</strong></font> id: <font color="#FF0000">9993</font>, <font color="#2040a0"><strong>name</strong></font>: <font color="#008000">&quot;Hahnemann Game&quot;</font>, date: <font color="#008000">&quot;7.8.2010&quot;</font> <font color="4444FF"><strong>}</strong></font>
+    ]
   <font color="4444FF"><strong>}</strong></font> )<font color="4444FF">;</font> 
 <font color="4444FF"><strong>}</strong></font> )<font color="4444FF">;</font> </code>
 				<br /><br />
@@ -268,7 +279,7 @@ $(<font color="#2040a0"><strong>document</strong></font>).ready( function()<font
 // A more complex case: 
 { id: <i>id</i>, text: <i>text</i>, description: <i>text</i>, date: <i>creation-date</i>, ... }</code>
 
-		<h2>Reference</h2>
+		<h2>Options</h2>
 		<h3>tokeninput( options )</h3>
 		Turns all the matching elements into token inputs. 
 		
@@ -405,6 +416,41 @@ $(<font color="#2040a0"><strong>document</strong></font>).ready( function()<font
 }</code>	
 		</div>
 
+
+		<div class="opt-name">onFocus</div>
+		<div class="opt-help">
+			(optional) A callback function used for the focus event. If you return <i>false</i>
+			the tokeninput will not be allowed focus, thus the autocomplete box will not show 
+			and the user will not be able to focus the element at all. It is your task 
+			to let the user know what's going on and why he's not allowed to focus. 
+			<br />
+			Alternatively (and by default) this value can be set to null, is equivalent to 
+			always returning <i>true</i>
+			<br />
+			Note the second parameter, a reference to tokeninput, which saves 
+			you some javascript OOP-mess. 
+<code>onFocus: function( event, tokeninput ){
+  if( Math.random() > 0.5 ){
+    return true; 
+  }
+  else{
+    alert( "bad luck... try again!" ); 
+    return false; 
+  }
+}</code>	
+		</div>
+		<div class="opt-name">onBlur</div>
+		<div class="opt-help">
+			(optional) A callback function that let's you know when the input loses focus. 
+			<br />
+			Note the second parameter, a reference to tokeninput, which saves 
+			you some javascript OOP-mess. 
+<code>onBlur: function( event, tokeninput ){
+  alert( "left for gooooood" ); 
+  // this could also be a good time to validate the user's input 
+  // if you haven't already done that from within onChange
+}</code>	
+		</div>
 		<div class="opt-name">maxTokens</div>
 		<div class="opt-help">(optional) maximum number of tokens, 0 means no limit. Defaults to 0. </div>
 		
@@ -417,5 +463,64 @@ $(<font color="#2040a0"><strong>document</strong></font>).ready( function()<font
 		<br clear="all" />
 		<br clear="all" />
 		<br clear="all" />
+		
+		
+		
+		<h2>Function reference</h2>
+		
+		<h3>Accessing the tokeninput object</h3>
+		<div class="text">
+			The tokeninput itself has a lot of useful functions. 
+			You can gain access to the tokeninput object in two ways: Inside any callback 
+			the second parameter is a reference ot the object. But you can also  
+			explicitly access with <br />
+			<code>var toki = $( "#your-hidden-input-id" ).data( "tokeninput" ); 
+
+// Now do something with it
+toki.insert( { id: ..., ... } ); </code>
+
+			<br />
+			In all the samples below assume that the datastucture looks like this:
+			<code>{ id: <i>some-id</i>, name: <i>some-persons-name</i> }</code>
+		</div>
+		
+		<div class="opt-name">result( objects )</div>
+		<div class="opt-help">
+			Let's the tokeninput know about the items in the autocomplete list. 
+			<i>objects</i> is an array of the datastructure you chose. 
+<code>// Following data normally comes from ajax
+var objects =  [ { id: 7, name: "Mr. T" }, { id: 8, "Smith" } ]; 
+toki.result( objects ); </code>
+		</div>
+		
+		<div class="opt-name">insert( object, bypass )</div>
+		<div class="opt-help">
+			Inserts a single object to the token input. 
+			<i>object</i> must be formed as the datastructure you chose. 
+			The second parameter, <i>bypass</i>, is optional and can be used to 
+			bypass the onInsert function if you defined one. It defaults to false. 
+<code>toki.insert( { id: 3, name: "Pipi Longstockings" } ); </code>
+		</div>
+		
+		<div class="opt-name">removeId</div>
+		<div class="opt-help">
+			Removes a token with a certain id. Again, the bypass parameter is optional 
+			and works just like with insert. 
+<code>// Remove the token with id 3 
+toki.removeId( 3 ); </code>
+		</div>
+		
+		<div class="opt-name">remove( i, bypass )</div>
+		<div class="opt-help">
+			Removes a token at a certain position. Again, the bypass parameter is optional 
+			and works just like with insert. 
+			<br /><br />
+			You can also use negative indexes to specify elements from the end. 
+<code>// Remove the first token
+toki.remove( 0 ); 
+
+// Remove the last token
+toki.remove( -1 ); </code>
+		</div>
 	</body>
 </html>

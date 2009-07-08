@@ -6,7 +6,7 @@ var Filters = {
 		if( columns ){
 			var newObj = []; 
 			for( var col in columns ){
-				newObj[newObj.length] = new String( obj[columns[col]] ); 
+				newObj[newObj.length] = "" + obj[columns[col]]; 
 			}
 			
 			return newObj; 
@@ -34,7 +34,7 @@ var Filters = {
 	// the search is always case insensitive
 	contains: function( text, obj, columns ){
 		text = text.toLowerCase(); 
-		var words = text.split( " " ); 
+		var words = text.split( / / ); 
 		var nrWords = words.length; 
 		var foundWords = 0;
 		obj = Filters.prepareData( obj, columns ); 

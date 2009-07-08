@@ -49,37 +49,47 @@ function TokenInput( element, opts ){
 		
 		// Are we already autocompleteActive? Do we have any changes since the last 
 		// filter request
-		this.autocompleteActive = false;
-		this.autocompleteLater = false; 
+		this.opts.autocompleteActive = false;
+		this.opts.autocompleteLater = false; 
 		
 		// Generate the table heading
 		var tableCols = ""; 
+		var tableHead = ""; 
+		
 		for( var i = 0; i < this.opts.columns.length; i++ ){
-			tableCols += 
-				"<th style='width: " + this.opts.columns[i].width + "'>" + 
-				this.opts.columns[i].caption + 
-				"</th>"; 
+			tableCols += "<col style='width: " + this.opts.columns[i].width + "' />"; 
+			tableHead += "<th>" + this.opts.columns[i].caption + "</th>"; 
 		}
 
 		// create and insert even more html
 		var inputHTML = " \
 			<div id='" + this.id + "' class='" + this.opts.containerClass + "'> \
-				<div style='position: absolute;width: 100%; '><a class='marker insertMarker'>&#8203;</a><a class='marker positionMarker' style='padding-left: 100px;'/></div> \
-				<input /> \
+				<div class='tokens'><a class='marker insertMarker'>&#8203;</a><a class='marker positionMarker'/></div> \
+				<textarea wrap='off'/> \
 			</div>";
 			
 		var popupHTML = " \
-			<table class='autocomplete'> \
-				<thead>" + tableCols + "</thead> \
-				<tbody></tbody> \
+			<div class='autocomplete'> \
+				<table> \
+					<colgroup>" + tableCols + "</colgroup> \
+					<thead>" + tableHead + "</thead> \
+				</table> \
+				<div> \
+					<table> \
+						<colgroup>" + tableCols + "</colgroup> \
+						<tbody></tbody> \
+					</table> \
+				</div> \
 			</table> \
 		"; 
 		
 		// store the elements 
 		this.elem.container = $( inputHTML ).insertAfter( element );
 		this.elem.source = element; 
-		this.elem.popup = $( popupHTML ).appendTo( document.body );
-		this.elem.input = this.elem.container.find( "input" ); 
+		this.elem.autocompleteContainer = $( popupHTML ).appendTo( document.body );
+		this.elem.autocompleteList = this.elem.autocompleteContainer.find( "tbody" ); 
+		this.elem.autocomplete = this.elem.autocompleteContainer.find( "div" ); 
+		this.elem.input = this.elem.container.find( "textarea" ); 
 		this.elem.tokens = this.elem.container.find( "div" ); 
 		this.elem.insertMarker = this.elem.container.find( "a.insertMarker" );
 		this.elem.positionMarker = this.elem.container.find( "a.positionMarker" );
@@ -91,11 +101,17 @@ function TokenInput( element, opts ){
 		// instead of this object and it's gonna confuse us and we don't 
 		// like to be confused!
 		var me = this;
-		this.elem.input.blur( function( e ){ me.handleBlur( e) } ); 
-		this.elem.input.focus( function( e ){ me.handleInput( e ) } ); 
-		this.elem.input.keyup( function( e ){ me.handleInput( e ) } ); 
-		this.elem.input.keydown( function( e ){ me.handleSpecialKeys( e ) } ); 
-		this.elem.tokens.click( function( e ){ me.elem.input.focus(); } ); 
+		this.elem.input.blur( function( e ){ return me.handleBlur( e ) } ); 
+		this.elem.input.focus( function( e ){ return me.handleFocus( e ) } ); 
+		this.elem.input.keyup( function( e ){ return me.handleInput( e ) } ); 
+		this.elem.input.keydown( function( e ){ return me.handleSpecialKeys( e ) } ); 
+		this.elem.tokens.click( function( e ){ return me.elem.input.focus(); } ); 
+		// Prevent form-submission with "enter" in safari
+		// this.elem.input.parents( "form" ).submit( function( e ){ return !me.opts.hasFocus; }); 
+		// Not necessary anymore since we switch to textareas, however, 
+		this.elem.input.keypress( function( e ){ return me.handleKeyPress( e ) } );
+		// Prevent transfering the focus to the scrollbar in safari
+		this.elem.autocomplete.mousedown( function( e ){ return false; } ); 
 		$(window).bind( 'resize', function( e ){ me.layout(); } ); 
 		this.layout(); 
 		
@@ -109,6 +125,17 @@ function TokenInput( element, opts ){
 			}
 		}
 		
+}
+
+// Handle keypress... this doesn't do much... 
+TokenInput.prototype.handleKeyPress = function( e ){
+	var ENTER = 13; 
+	
+	// don't allow the user to create a line break
+	// (after all we're inside a text-area)
+	if( e.which == ENTER ){
+		return false;
+	}
 }
 
 // Handle the up/down/... keys
@@ -141,6 +168,9 @@ TokenInput.prototype.handleSpecialKeys = function( e ){
 		else{
 			this.select( this.opts.selection ); 
 		}
+		
+		// Remember - this alone is not the key to cancel form
+		// submission on all browser. (see end of the constructor for safari!)
 		return false; 
 	}
 	
@@ -156,7 +186,34 @@ TokenInput.prototype.handleSpecialKeys = function( e ){
 	}
 };
 
-// Handles the focus and the keydown event
+// Handles the focus event
+TokenInput.prototype.handleFocus = function( e ){
+	if( this.opts.onFocus && !this.opts.onFocus( e, this ) ){
+		return false; 
+	}
+	else{
+		this.opts.hasFocus = true; 
+		this.handleInput(); 
+	}
+}
+
+// Handles the blur event
+TokenInput.prototype.handleBlur = function(){
+	if( this.opts.onBlur ){
+		this.opts.onBlur(); 
+	}
+	
+	
+	// Hide EVERYTHING! 
+	this.opts.hasFocus = false; 
+	this.opts.selection = -1; 
+	this.elem.autocompleteList.find( "tr" ).removeClass( "hover" ); 
+	this.elem.autocompleteContainer.hide(); 
+};
+
+
+
+// Handles the the keydown event
 TokenInput.prototype.handleInput = function(){
 	// Do we even have a filter function? 
 	if( !this.opts.autocomplete ){
@@ -174,7 +231,7 @@ TokenInput.prototype.handleInput = function(){
 		}
 		
 		// but make sure the table's visible anyways!
-		this.elem.popup.show(); 
+		this.elem.autocompleteContainer.show(); 
 		this.layout(); 
 		return; 
 	}
@@ -185,11 +242,11 @@ TokenInput.prototype.handleInput = function(){
 
 // Starts a new search
 TokenInput.prototype.startAutocomplete = function(){
-	if( this.autocompleteActive ){
-		this.autocompleteLater = true; 
+	if( this.opts.autocompleteActive ){
+		this.opts.autocompleteLater = true; 
 	}
 	else{
-		this.autocompleteActive = true; 
+		this.opts.autocompleteActive = true; 
 		this.filerLater = false; 
 		
 		// Compatibility for Adobe Air
@@ -203,9 +260,9 @@ TokenInput.prototype.startAutocomplete = function(){
 		}
 		// Any other javascript client
 		else{
-			document.__TOKENINPUT__CURRENT_OBJ = this; 
-			var text = this.elem.input.val().replace( /\"/g, "\\\"" ); 
-			window.setTimeout( "document.__TOKENINPUT__CURRENT_OBJ.opts.autocomplete(\""+ text + "\", document.__TOKENINPUT__CURRENT_OBJ );", 1 ); 
+			var me = this;  
+			var text = this.elem.input.val(); 
+			window.setTimeout( function(){ me.opts.autocomplete( text, me ) }, 1 ); 
 		}
 	}
 };
@@ -220,7 +277,7 @@ TokenInput.prototype.result = function( objects ){
 	
 	
 	// Remove old search results
-	this.elem.popup.find( "tbody tr" ).remove(); 
+	this.elem.autocompleteList.find( "tr" ).remove(); 
 
 	
 	// Insert the new result
@@ -230,16 +287,16 @@ TokenInput.prototype.result = function( objects ){
 			cols += "<td>" + this.opts.lastResult[ i ][ this.opts.columns[j].field ] + "</td>"; 
 		}
 		
-		this.elem.popup.find( "tbody" ).append( "<tr>" + cols + "</tr>" ); 
+		this.elem.autocompleteList.append( "<tr>" + cols + "</tr>" ); 
 	}
 	
 	// Add hover and click interactivity awsomeness!
 	var me = this; 
-	this.elem.popup.find( "tbody tr" ).hover( function(){
+	this.elem.autocompleteList.find( "tr" ).hover( function(){
 		me.hover( this.sectionRowIndex, false ); 
 	} ); 
 	
-	this.elem.popup.find( "tbody tr" ).mousedown( function(){
+	this.elem.autocompleteList.find( "tr" ).mousedown( function(){
 		me.select( this.sectionRowIndex ); 
 		me.elem.input.blur(); 
 		return false; 
@@ -253,27 +310,16 @@ TokenInput.prototype.result = function( objects ){
 	
 	// Done, that was tough! 
 	this.markDuplicates();
-	this.elem.popup.show(); 
+	this.elem.autocompleteContainer.show(); 
 	this.layout();
 	
 	// One more - should we re-filter (already)? 
-	this.autocompleteActive = false; 
-	if( this.autocompleteLater == true ){
-		this.autocompleteLater = false; 
+	this.opts.autocompleteActive = false; 
+	if( this.opts.autocompleteLater == true ){
+		this.opts.autocompleteLater = false; 
 		this.startAutocomplete(); 
 	}
 };
-
-
-
-// Handles the blur event
-TokenInput.prototype.handleBlur = function(){
-	// Hide EVERYTHING! 
-	this.opts.selection = -1; 
-	this.elem.popup.find( "tbody tr" ).removeClass( "hover" ); 
-	this.elem.popup.hide(); 
-};
-
 
 
 // Mark all the entries in the dataset that we have already 
@@ -294,7 +340,7 @@ TokenInput.prototype.markDuplicates = function(){
 	
 	// Now let's not forget to remove all the double-entries
 	for( var i in this.opts.lastResult ){
-		var row = this.elem.popup.find( "tbody tr:eq(" + i + ")" ); 
+		var row = this.elem.autocompleteList.find( "tr:eq(" + i + ")" ); 
 		if( ids[this.opts.lastResult[i].id] ){
 			row.addClass( "invalid" ); 
 		}
@@ -303,6 +349,7 @@ TokenInput.prototype.markDuplicates = function(){
 		}
 	}
 };
+
 
 // Something changed!
 // Updates the value of the source textfield
@@ -317,53 +364,56 @@ TokenInput.prototype.fireChange = function(){
 	this.opts.onChange( this.opts.tokenObjects, this );
 };
 
+
 // Makes sure things are pretty! 
 TokenInput.prototype.layout = function(){
 	this.elem.input.css( "paddingLeft", this.elem.positionMarker.position().left + "px" ); 
-	this.elem.input.css( "paddingTop", this.elem.positionMarker.position().top + "px" ); 
+	var padTop = this.elem.positionMarker.position().top + parseInt(this.elem.positionMarker.css("padding-top") );
+	this.elem.input.css( "paddingTop", padTop + "px" ); 
+	//alert( this.elem.tokens.height());
 	this.elem.input.css( "height", ( 3 + this.elem.tokens.height()) + "px" ); 
 	
 	//this.elem.tokens.css( "width", this.elem.input.outerWidth() + "px" ); 
 	var offset = this.elem.input.offset();
-	this.elem.popup.css( "left", offset.left + "px" ); 
-	this.elem.popup.css( "width", this.elem.input.innerWidth() + "px" ); 
-	
+	this.elem.autocompleteContainer.css( "left", offset.left + "px" ); 
+	this.elem.autocompleteContainer.css( "width", this.elem.input.innerWidth() + "px" ); 
+
 	// where can we fit the autocomplete box? 
 	var spaceTop = offset.top - $(window).scrollTop() - 5; 
 	var spaceBottom = $(window).height() - this.elem.input.outerHeight() - spaceTop - 10; 
 	var maxH = this.opts.autocompleteMaxHeight; 
-	var innerH = this.elem.popup.outerHeight(); 
-	var outerH = Math.min( maxH, innerH?innerH:maxH );
+	var innerH = this.elem.autocompleteList.outerHeight(); 
+	var outerH = this.elem.autocompleteContainer.outerHeight(); 
 	
-	var tbody = this.elem.popup.find( "tbody" ); 
+	outerH = Math.min( maxH, outerH?outerH:maxH );
+	
 	if( spaceBottom > outerH ){
 		// Great, fit at bottom! 
-		tbody.css( "height", outerH + "px" ); 
-		this.elem.popup.css( "top", ( offset.top + this.elem.input.outerHeight() ) + "px" ); 	
+		this.elem.autocomplete.css( "height", outerH + "px" ); 
+		this.elem.autocompleteContainer.css( "top", ( offset.top + this.elem.input.outerHeight() ) + "px" ); 	
 	}
 	else if( spaceTop > outerH ){
 		// Hm... still okay, fit at top
-		tbody.css( "height", outerH + "px" ); 
-		this.elem.popup.css( "top", ( offset.top - this.elem.popup.outerHeight() - 1 ) + "px" );
+		this.elem.autocomplete.css( "height", outerH + "px" ); 
+		this.elem.autocompleteContainer.css( "top", ( offset.top - this.elem.autocompleteList.outerHeight() - 1 ) + "px" );
 	}
 	else if( spaceBottom > spaceTop ){
 		// Starts to suck, fit at bottom
-		tbody.css( "height", spaceBottom + "px" ); 
-		this.elem.popup.css( "top", ( offset.top + this.elem.input.outerHeight() ) + "px" ); 
+		this.elem.autocomplete.css( "height", spaceBottom + "px" ); 
+		this.elem.autocompleteContainer.css( "top", ( offset.top + this.elem.input.outerHeight() ) + "px" ); 
 	}
 	else{
 		// Let's get nasty! 
-		tbody.css( "height", spaceTop + "px" ); 
-		this.elem.popup.css( "top", ( offset.top - this.elem.popup.outerHeight() - 1 ) + "px" );
+		this.elem.autocomplete.css( "height", spaceTop + "px" ); 
+		this.elem.autocompleteContainer.css( "top", ( offset.top - this.elem.autocompleteList.outerHeight() - 1 ) + "px" );
 	}
 };
-
 
 
 // Hover the i-the entry of a tokeninput field
 TokenInput.prototype.hover = function( i, autoSelectNext ){
 	// Disable old selection
-	this.elem.popup.find( "tbody tr" ).removeClass( "hover" ); 
+	this.elem.autocompleteList.find( "tr" ).removeClass( "hover" ); 
 	
 	// Make sure i is a valid index... 
 	// We do that by looping through all the results until we find one that 
@@ -378,7 +428,7 @@ TokenInput.prototype.hover = function( i, autoSelectNext ){
 	if( autoSelectNext == undefined || autoSelectNext == true ){
 		while( invalid && count < this.opts.nrResults ){
 			index = ( i + dir*count + this.opts.nrResults ) % this.opts.nrResults;
-			if( this.elem.popup.find( "tbody tr:eq(" + index + ")" ).hasClass( "invalid" ) )
+			if( this.elem.autocompleteList.find( "tr:eq(" + index + ")" ).hasClass( "invalid" ) )
 				count ++; 
 			else
 				invalid = false; 
@@ -386,46 +436,44 @@ TokenInput.prototype.hover = function( i, autoSelectNext ){
 	}
 	else{
 		index = i; 
-		// invalid = this.elem.popup.find( "tbody tr:eq(" + index + ")" ).hasClass( "invalid" ); 
+		// invalid = this.elem.autocompleteList.find( "tr:eq(" + index + ")" ).hasClass( "invalid" ); 
 		invalid = false; 
 	}
 	
 	if( invalid ){
-		this.elem.popup.find( "tbody tr" ).removeClass( "hover" ); 
+		this.elem.autocompleteList.find( "tr" ).removeClass( "hover" ); 
 		this.opts.selection = -1; 
 		return; 
 	}
 	else{
 		this.opts.selection = index; 
-		var tbody = this.elem.popup.find( "tbody" ); 
-		var row = tbody.find( "tr:eq(" + index + ")" ); 
+		var row = this.elem.autocompleteList.find( "tr:eq(" + index + ")" ); 
 		row.addClass( "hover" ); 
 		 
 		// Is the element visible? 
-		console.log( "----" ); 
-		var innerH = this.elem.popup.height(); 
-		var outerH = this.elem.popup.height(); 
+		var innerH = this.elem.autocompleteList.height(); 
+		var outerH = this.elem.autocompleteList.height(); 
 		var y = row.position().top;
 		var h = row.height(); 
-		var scrollY = tbody[0].scrollTop; 
+		var scrollY = this.elem.autocomplete[0].scrollTop; 
 		
 		// Is the row above the current display area? 
-		console.log( "y= " + y + ", scrollY = " + scrollY ); 
+//		console.log( "y= " + y + ", scrollY = " + scrollY ); 
 		if( y < 0 ){
 			// aha!
-			console.log( "above!" ); 
-			tbody[0].scrollTop += y; 
-			console.log( y ); 
+//			console.log( "above!" ); 
+			//this.elem.autocomplete[0].scrollTop += y; 
+//			console.log( y ); 
 		}
 		// Is it below? 
 		else if( y + h > innerH ){
 			// i know what to do!!!
-			console.log( "below" ); 
-			console.log( y + h - innerH ); 
-			tbody[0].scrollTop += y + h - innerH; 
+//			console.log( "below" ); 
+//			console.log( y + h - innerH ); 
+			//this.elem.autocomplete[0].scrollTop += y + h - innerH; 
 		}
 		else{
-			console.log( "righty right" ); 
+//			console.log( "righty right" ); 
 			// must be visible then! 
 		}
 	}
@@ -443,7 +491,7 @@ TokenInput.prototype.select = function( i ){
 	}
 	
 	// Result already inserted? 
-	if( this.elem.popup.find( "tbody tr:eq(" + i + ")" ).hasClass( "invalid" ) ){
+	if( this.elem.autocompleteList.find( "tr:eq(" + i + ")" ).hasClass( "invalid" ) ){
 		return; 
 	}
 	
@@ -497,17 +545,20 @@ TokenInput.prototype.insert = function( obj, bypass ){
 	}
 };
 
-// Removes the last token
+
+
+// Removes the i-th token
 TokenInput.prototype.remove = function( i, bypass ){
 	// Check if the index is in range... 
-	var len = this.options.nrResult; 
-	if( len == 0 ){
+	var len = this.opts.tokenObjects.length; 
+	if( !len || len == 0 ){
 		return; 
 	}
 	
 	i = ( ( i % len ) + len ) % len; // Turns negative index to positive ones, 
 	                                 // e.g. -1 turns into len - 1
 
+	
 	// User-Confirmation
 	if( bypass || this.opts.onDelete( this.opts.tokenObjects[i], this ) ){
 		this.opts.tokenObjects.splice( i, 1 ); 
