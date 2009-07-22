@@ -51,5 +51,11 @@
 		<java jar="tools/yuicompressor/yuicompressor-2.4.2.jar" fork="true" failonerror="true">
 			<arg line="-o release/filters-${version}.pack.js js/filters.js" />
 		</java>
+		<java jar="tools/yuicompressor/yuicompressor-2.4.2.jar" fork="true" failonerror="true">
+			<arg line="-o release/tokeninput-${version}.pack.js js/tokeninput.js" />
+		</java>
+		<copy file="release/tokeninput-${version}.pack.js" tofile="release/tokeninput.js" />
+		<copy file="release/filters-${version}.pack.js" tofile="release/filters.js" />
+		
 	</target>
 </project>

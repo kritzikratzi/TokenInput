@@ -6,11 +6,12 @@
 		<script src="js/demo/projects.js"> </script>
 		<script src="js/demo/tags.js"> </script>
 		<script src="js/demo/email.js"> </script>
-		
+
 		<link rel="stylesheet" type="text/css" href="styles/default/style.css"/>
 		<style type="text/css">
 			body{
 				margin: 10px; 
+				margin-top: 300px;
 				font-size: 12px; 
 				font-family: arial; 
 			}
@@ -19,8 +20,8 @@
 				clear: left; 
 				margin-top: 20px; 
 				float: left; 
-				width: 120px; 
-				font-weight: bold; 
+				width: 160px;
+				font-weight: bold;
 			}
 			
 			div.opt-name:after{
@@ -30,13 +31,13 @@
 			div.opt-help{
 				margin-top: 20px; 
 				float: left; 
-				width: 600px; 
+				width: 600px;
 				padding-bottom: 20px; 
 				border-bottom: 1px dotted black; 
 			}
 			
 			div.text{
-				width: 720px; 
+				width: 760px;
 			}
 			
 			code{
@@ -229,7 +230,21 @@
   alert( "You have already reached the maximum number of tokens" ); 
 }</code>
 		</div>
-		
+
+		<div class="opt-name">onResize</div>
+		<div class="opt-help">
+			(optional) A callback function that is called when the height of the
+			tokeninput changes (because tokens were added or deleted).
+			<br />
+			The first parameter is a
+			reference to the tokeninput object.
+
+<code>onResize: function( toki ){
+  alert( "doing some layout udpates..." );
+}</code>
+		</div>
+
+
 		<div class="opt-name">tokenText</div>
 		<div class="opt-help">
 			(optional) A callback function that returns the text that will be 
@@ -268,21 +283,27 @@
 		<div class="opt-name">autocomplete</div>
 		<div class="opt-help">
 			(optional) A callback function used for autocompletion. It is designed
-			to work in an asynchroneous fashion, so one can load suggestions with AJAX. 
+			to work in an asynchroneous fashion, so one can load suggestions with AJAX.
 			<br />
-			Alternatively (and by default) this value can be set to null, which 
-			will disable the autocomplete functionality. 
+			Alternatively (and by default) this value can be set to null, which
+			will disable the autocomplete functionality.
 			<br />
-			Note the second parameter, a reference to tokeninput, which saves 
-			you some javascript OOP-mess. 
+			Note the second parameter, a reference to tokeninput, which saves
+			you some javascript OOP-mess.
 			<br />
 			If you want to use autocomplete <b>you need to provide the columns
 			option as well.</b>
 <code>autocomplete: function( str, tokeninput ){
   $.getJSON( "/autocomplete?query=" + str, function( data ){
-    tokeninput.result( data ); 
-  } ); 
-}</code>	
+    tokeninput.result( data );
+  } );
+}</code>
+		</div>
+
+		<div class="opt-name">autocompleteCaching</div>
+		<div class="opt-help">
+			(optional) Enables/Disables partial caching of autocomplete results.
+			Default to true.
 		</div>
 
 
@@ -371,25 +392,25 @@ toki.result( objects ); </code>
 <code>toki.insert( { id: 3, name: "Pipi Longstockings" } ); </code>
 		</div>
 		
-		<div class="opt-name">removeId</div>
+		<div class="opt-name">deleteId( id, bypass )</div>
 		<div class="opt-help">
 			Removes a token with a certain id. Again, the bypass parameter is optional 
-			and works just like with insert. 
+			and works just like with insert.
 <code>// Remove the token with id 3 
-toki.removeId( 3 ); </code>
+toki.deleteId( 3 ); </code>
 		</div>
 		
-		<div class="opt-name">remove( i, bypass )</div>
+		<div class="opt-name">deleteIndex( i, bypass )</div>
 		<div class="opt-help">
 			Removes a token at a certain position. Again, the bypass parameter is optional 
 			and works just like with insert. 
 			<br /><br />
 			You can also use negative indexes to specify elements from the end. 
 <code>// Remove the first token
-toki.remove( 0 ); 
+toki.deleteIndex( 0 );
 
 // Remove the last token
-toki.remove( -1 ); </code>
+toki.deleteIndex( -1 ); </code>
 		</div>
 	</body>
 </html>

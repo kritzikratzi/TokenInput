@@ -6,7 +6,7 @@
 		<script src="js/demo/projects.js"> </script>
 		<script src="js/demo/tags.js"> </script>
 		<script src="js/demo/email.js"> </script>
-		
+
 		<link rel="stylesheet" type="text/css" href="styles/default/style.css"/>
 		<style type="text/css">
 			body{
@@ -106,7 +106,8 @@
 
 <font color="#444444">// Initialize the tokeninput when the document finished loading</font>
 $(<font color="#2040a0"><strong>document</strong></font>).ready( function()<font color="4444FF"><strong>{</strong></font>
-  $( <font color="#008000">&quot;#projects&quot;</font> ).tokeninput( <font color="4444FF"><strong>{</strong></font> 
+  $( <font color="#008000">&quot;#projects&quot;</font> ).tokeninput( <font color="4444FF"><strong>{</strong></font>
+    autocompleteMaxHeight: <font color="#FF0000">300</font>,  
     columns: [
       <font color="4444FF"><strong>{</strong></font> field: <font color="#008000">&quot;name&quot;</font>, caption: <font color="#008000">&quot;Projekt&quot;</font>, <font color="#2040a0"><strong>width</strong></font>: <font color="#008000">&quot;80%&quot;</font> <font color="4444FF"><strong>}</strong></font>, 
       <font color="4444FF"><strong>{</strong></font> field: <font color="#008000">&quot;date&quot;</font>, caption: <font color="#008000">&quot;Datum&quot;</font>, <font color="#2040a0"><strong>width</strong></font>: <font color="#008000">&quot;20%&quot;</font> <font color="4444FF"><strong>}</strong></font>

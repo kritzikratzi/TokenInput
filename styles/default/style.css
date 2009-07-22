@@ -1,24 +1,37 @@
 .tokeninput{
 	position: relative; 
+	max-width: 500px;
 }
 
 .tokeninput .tokens{
 	position: absolute;
-	width: 100%;	
+	width: 100%;
 	padding-top: 2px; 
 	padding-left: 3px;
 }
 
+.tokeninput .tokens span{
+	display: block;
+	float: left;
+}
 /* The autocomplete popup (which is a table!) */
 .autocomplete{
-	border: 1px solid black; 
-	border-top: 1px dotted black; 
 	position: absolute; 
 	background-color: white; 
 	left: 0px;
 	display: none; 
-	z-index: 10000;
-	width: 50%; 
+	z-index: 950;
+}
+
+/* Border-Style if displayed below the input */
+.autocompleteBelow{
+	border: 1px solid black;
+	border-top: 1px dotted black;
+}
+
+.autocompleteAbove{
+	border: 1px solid black;
+	border-bottom: 1px dotted black;
 }
 
 /* Scrollable body */
@@ -45,6 +58,7 @@
 .autocomplete td{
 	padding-left: 5px;
 }
+
 /* Rows in the autocomplete popup */
 .autocomplete tbody tr{
 	font-size: 11px; 
@@ -62,9 +76,11 @@
 .tokeninput textarea{
 	font-family: arial, helvetica;
 	font-size: 10px;
-	width: 100%;
 	overflow: hidden;
-	resize: none;
+
+	display: block;
+	width: 100%;
+	max-width:none;
 }
 
 .autocomplete .invalid{
@@ -85,21 +101,18 @@
 .tokeninput .token a.before{
 	background-image: url( token_left.png );
 	background-repeat: repeat-x; 
-	background-color: #eee; 
 	padding: 4px 5px 5px 0px;
 }
 
 .tokeninput .token a.center{
 	background-image: url( token_center.png ); 
 	background-repeat: repeat-x; 
-	background-color: #fee;
 	padding: 4px 0px 5px 0px;
 }
 
 .tokeninput .token a.after{
 	background-image: url( token_right.png ); 
 	background-repeat: repeat-x; 
-	background-color: #efe;
 	padding: 4px 15px 5px 0px; 
 }
 

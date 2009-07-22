@@ -13,15 +13,20 @@ var tokenInputDefaults = {
 	onDelete: function( obj, tokeninput ){ return true; }, 
 	onInsert: function( obj, tokeninput ){ return true; }, 
 	onFull: function( obj, tokeninput ){}, 
-	tokenText: function( obj, tokeninput ){ return obj.id }, 
+	tokenText: function( obj, tokeninput ){ return obj.id },
+	onResize: function( tokeninput ){}, 
 	onCreate: null, // create function
 	autocomplete: null, // autocomplete function
 	value: null, // initial objects 
 	
 	multi: true, 
 	duplicates: false, 
+	maxItems: null,
+
 	autocompleteMaxHeight: 500, 
-	
+	autocompleteCaching: true,
+
+
 	containerClass: "tokeninput"
 }; 
 
@@ -65,7 +70,7 @@ function TokenInput( element, opts ){
 		var inputHTML = " \
 			<div id='" + this.id + "' class='" + this.opts.containerClass + "'> \
 				<div class='tokens'><a class='marker insertMarker'>&#8203;</a><a class='marker positionMarker'/></div> \
-				<textarea wrap='off'/> \
+				<textarea wrap='off'></textarea> \
 			</div>";
 			
 		var popupHTML = " \
@@ -136,6 +141,8 @@ TokenInput.prototype.handleKeyPress = function( e ){
 	if( e.which == ENTER ){
 		return false;
 	}
+
+	return true; 
 }
 
 // Handle the up/down/... keys
@@ -184,6 +191,8 @@ TokenInput.prototype.handleSpecialKeys = function( e ){
 		this.value = ""; 
 		this.elem.input.blur(); 
 	}
+
+	return true; 
 };
 
 // Handles the focus event
@@ -195,6 +204,8 @@ TokenInput.prototype.handleFocus = function( e ){
 		this.opts.hasFocus = true; 
 		this.handleInput(); 
 	}
+
+	return true; 
 }
 
 // Handles the blur event
@@ -207,7 +218,8 @@ TokenInput.prototype.handleBlur = function(){
 	// Hide EVERYTHING! 
 	this.opts.hasFocus = false; 
 	this.opts.selection = -1; 
-	this.elem.autocompleteList.find( "tr" ).removeClass( "hover" ); 
+	this.elem.autocompleteList.find( "tr" ).removeClass( "hover" );
+	this.elem.input.val( "" ); 
 	this.elem.autocompleteContainer.hide(); 
 };
 
@@ -221,7 +233,7 @@ TokenInput.prototype.handleInput = function(){
 		return; 
 	}
 
-	if( this.opts.lastSearch == this.elem.input.val() ){
+	if( this.opts.lastSearch == this.elem.input.val() && this.opts.autocompleteCaching ){
 		// nope... no need to re-search!!!
 		
 		// do we enforce list selection? 
@@ -370,10 +382,17 @@ TokenInput.prototype.layout = function(){
 	this.elem.input.css( "paddingLeft", this.elem.positionMarker.position().left + "px" ); 
 	var padTop = this.elem.positionMarker.position().top + parseInt(this.elem.positionMarker.css("padding-top") );
 	this.elem.input.css( "paddingTop", padTop + "px" ); 
-	//alert( this.elem.tokens.height());
-	this.elem.input.css( "height", ( 3 + this.elem.tokens.height()) + "px" ); 
+
+	var showTable = this.opts.lastResult && this.opts.lastResult.length != 0;
+	this.elem.autocomplete.css( "display", showTable?"block":"none" );
 	
-	//this.elem.tokens.css( "width", this.elem.input.outerWidth() + "px" ); 
+	//this.elem.tokens.css( "width", this.elem.input.outerWidth() + "px" );
+	if( this.opts.oldHeight != this.elem.tokens.height() ){
+		this.opts.oldHeight = this.elem.tokens.height();
+		this.elem.input.css( "height", ( 3 + this.opts.oldHeight) + "px" );
+		this.opts.onResize( this ); 
+	}
+	
 	var offset = this.elem.input.offset();
 	this.elem.autocompleteContainer.css( "left", offset.left + "px" ); 
 	this.elem.autocompleteContainer.css( "width", this.elem.input.innerWidth() + "px" ); 
@@ -384,29 +403,37 @@ TokenInput.prototype.layout = function(){
 	var maxH = this.opts.autocompleteMaxHeight; 
 	var innerH = this.elem.autocompleteList.outerHeight(); 
 	var outerH = this.elem.autocompleteContainer.outerHeight(); 
-	
-	outerH = Math.min( maxH, outerH?outerH:maxH );
-	
-	if( spaceBottom > outerH ){
-		// Great, fit at bottom! 
-		this.elem.autocomplete.css( "height", outerH + "px" ); 
+
+	var h = Math.min( maxH, outerH );
+	var className = "autocompleteBelow";
+
+	if( spaceBottom > h ){
+		// Great, fit at bottom!
+		className = "autocompleteBelow";
+		this.elem.autocomplete.css( "height", innerH + "px" );
 		this.elem.autocompleteContainer.css( "top", ( offset.top + this.elem.input.outerHeight() ) + "px" ); 	
 	}
-	else if( spaceTop > outerH ){
+	else if( spaceTop > h ){
+		className = "autocompleteAbove";
 		// Hm... still okay, fit at top
-		this.elem.autocomplete.css( "height", outerH + "px" ); 
-		this.elem.autocompleteContainer.css( "top", ( offset.top - this.elem.autocompleteList.outerHeight() - 1 ) + "px" );
+		this.elem.autocomplete.css( "height", innerH + "px" );
+		this.elem.autocompleteContainer.css( "top", ( offset.top - this.elem.autocompleteContainer.outerHeight() - 1 ) + "px" );
 	}
 	else if( spaceBottom > spaceTop ){
+		className = "autocompleteBelow";
 		// Starts to suck, fit at bottom
 		this.elem.autocomplete.css( "height", spaceBottom + "px" ); 
 		this.elem.autocompleteContainer.css( "top", ( offset.top + this.elem.input.outerHeight() ) + "px" ); 
 	}
 	else{
 		// Let's get nasty! 
+		className = "autocompleteAbove";
 		this.elem.autocomplete.css( "height", spaceTop + "px" ); 
 		this.elem.autocompleteContainer.css( "top", ( offset.top - this.elem.autocompleteList.outerHeight() - 1 ) + "px" );
 	}
+
+	this.elem.autocompleteContainer.removeClass( className == "autocompleteAbove"?"autocompleteBelow":"autocompleteAbove" );
+	this.elem.autocompleteContainer.addClass( className == "autocompleteAbove"?"autocompleteAbove":"autocompleteBelow" );
 };
 
 
@@ -452,28 +479,22 @@ TokenInput.prototype.hover = function( i, autoSelectNext ){
 		 
 		// Is the element visible? 
 		var innerH = this.elem.autocompleteList.height(); 
-		var outerH = this.elem.autocompleteList.height(); 
+		var outerH = this.elem.autocompleteContainer.height(); 
 		var y = row.position().top;
 		var h = row.height(); 
 		var scrollY = this.elem.autocomplete[0].scrollTop; 
 		
 		// Is the row above the current display area? 
-//		console.log( "y= " + y + ", scrollY = " + scrollY ); 
 		if( y < 0 ){
 			// aha!
-//			console.log( "above!" ); 
-			//this.elem.autocomplete[0].scrollTop += y; 
-//			console.log( y ); 
+			this.elem.autocomplete[0].scrollTop += y-height; 
 		}
 		// Is it below? 
-		else if( y + h > innerH ){
+		else if( y + h > outerH ){
 			// i know what to do!!!
-//			console.log( "below" ); 
-//			console.log( y + h - innerH ); 
-			//this.elem.autocomplete[0].scrollTop += y + h - innerH; 
+			this.elem.autocomplete[0].scrollTop += y + h - outerH; 
 		}
 		else{
-//			console.log( "righty right" ); 
 			// must be visible then! 
 		}
 	}
@@ -503,7 +524,7 @@ TokenInput.prototype.select = function( i ){
 // adds a new token
 TokenInput.prototype.insert = function( obj, bypass ){
 	// Are there already too many items? 
-	if( this.opts.maxItems && this.opts.tokenObjects.length >= maxItems ){
+	if( this.opts.maxItems && this.opts.tokenObjects.length >= this.opts.maxItems ){
 		this.opts.onFull( obj, this ); 
 	}
 	
@@ -515,10 +536,10 @@ TokenInput.prototype.insert = function( obj, bypass ){
 		           "&#8203;<a class='before'></a>" + 
 		           "<a class='center'>" + this.opts.tokenText( obj, this ) + "</a>" + 
 		           "<a class='after'></a>&#8203;" + 
-		           "</span>";
+		           "</span> / ";
 		
 		var token = $( html ).insertBefore( this.elem.insertMarker ); 
-		var space = $( "<span>&#32;</span>&#32;" ).insertBefore( this.elem.insertMarker ); 
+		var space = $( "<span>&#32; </span>" ).insertBefore( this.elem.insertMarker ); 
 		var me = this; 
 		token.find( "a" ).mousedown( function(){
 			// Figure out the current position... 
@@ -546,9 +567,13 @@ TokenInput.prototype.insert = function( obj, bypass ){
 };
 
 
+// Deprecated:
+TokenInput.prototype.remove = function( i, bypass ){
+	return this.deleteIndex( i, bypass );
+};
 
 // Removes the i-th token
-TokenInput.prototype.remove = function( i, bypass ){
+TokenInput.prototype.deleteIndex = function( i, bypass ){
 	// Check if the index is in range... 
 	var len = this.opts.tokenObjects.length; 
 	if( !len || len == 0 ){
@@ -571,11 +596,16 @@ TokenInput.prototype.remove = function( i, bypass ){
 	}
 };
 
+// Deprecated:
+TokenInput.prototype.removeId = function( i, bypass ){
+	return this.deleteId( i, bypass );
+};
+
 // Removes a token with a certain id
-TokenInput.prototype.removeId = function( id, bypass ){
+TokenInput.prototype.deleteId = function( id, bypass ){
 	for( var i in this.opts.tokenObjects.length ){
 		if( this.opts.tokenObjects[i].id == id ){
-			remove( i, bypass ); 
+			this.deleteIndex( i, bypass );
 			return true; 
 		}
 	}

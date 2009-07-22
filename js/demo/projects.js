@@ -15,7 +15,8 @@ for( var i = 0; i < 100; i++ ){
 
 // Initialize the tokeninput when the document finished loading
 $(document).ready( function(){
-	$( "#projects" ).tokeninput( { 
+	$( "#projects" ).tokeninput( {
+		autocompleteMaxHeight: 300,  
 		columns: [
 			{ field: "name", caption: "Projekt", width: "80%" }, 
 			{ field: "date", caption: "Datum", width: "20%" }
