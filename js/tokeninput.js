@@ -89,7 +89,7 @@ function TokenInput( element, opts ){
 		"; 
 		
 		// store the elements 
-		this.elem.container = $( inputHTML ).insertAfter( element );
+		this.elem.container = $( inputHTML ).insertBefore( element );
 		this.elem.source = element; 
 		this.elem.autocompleteContainer = $( popupHTML ).appendTo( document.body );
 		this.elem.autocompleteList = this.elem.autocompleteContainer.find( "tbody" ); 
