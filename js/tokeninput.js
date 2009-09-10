@@ -111,6 +111,9 @@ function TokenInput( element, opts ){
 		this.elem.input.keyup( function( e ){ return me.handleInput( e ) } ); 
 		this.elem.input.keydown( function( e ){ return me.handleSpecialKeys( e ) } ); 
 		this.elem.tokens.click( function( e ){ return me.elem.input.focus(); } ); 
+		
+		$(document).bind( "tokenInputUpdate", function( e ){ return me.handleTokenInputUpdate( e ); } );
+		
 		// Prevent form-submission with "enter" in safari
 		// this.elem.input.parents( "form" ).submit( function( e ){ return !me.opts.hasFocus; }); 
 		// Not necessary anymore since we switch to textareas, however, 
@@ -209,11 +212,10 @@ TokenInput.prototype.handleFocus = function( e ){
 }
 
 // Handles the blur event
-TokenInput.prototype.handleBlur = function(){
+TokenInput.prototype.handleBlur = function( e ){
 	if( this.opts.onBlur ){
 		this.opts.onBlur(); 
 	}
-	
 	
 	// Hide EVERYTHING! 
 	this.opts.hasFocus = false; 
@@ -224,6 +226,23 @@ TokenInput.prototype.handleBlur = function(){
 };
 
 
+// Handle input-removal... 
+TokenInput.prototype.handleTokenInputUpdate = function(){
+	// Was element complete deleted? 
+	if( $( "body" ).find( "#" + this.id ).length == 0 ){
+		this.elem.autocompleteContainer.remove(); 
+		this.elem.container.remove();
+	}
+	// Nope... 
+	else{
+		// Do we have foucs? 
+		// If so redo the layout, else .... let's hide! 
+		if( this.opts.hasFocus )
+			this.layout(); 
+		else
+			this.elem.autocompleteContainer.hide(); 
+	}
+}; 
 
 // Handles the the keydown event
 TokenInput.prototype.handleInput = function(){
@@ -322,8 +341,11 @@ TokenInput.prototype.result = function( objects ){
 	
 	// Done, that was tough! 
 	this.markDuplicates();
-	this.elem.autocompleteContainer.show(); 
-	this.layout();
+	if( this.opts.hasFocus ){
+		this.elem.autocompleteContainer.show(); 
+		this.layout();
+	}
+	
 	
 	// One more - should we re-filter (already)? 
 	this.opts.autocompleteActive = false; 
@@ -389,7 +411,7 @@ TokenInput.prototype.layout = function(){
 	//this.elem.tokens.css( "width", this.elem.input.outerWidth() + "px" );
 	if( this.opts.oldHeight != this.elem.tokens.height() ){
 		this.opts.oldHeight = this.elem.tokens.height();
-		this.elem.input.css( "height", ( 3 + this.opts.oldHeight) + "px" );
+		this.elem.input.css( "height", ( this.opts.oldHeight - 6 ) + "px" );
 		this.opts.onResize( this ); 
 	}
 	
